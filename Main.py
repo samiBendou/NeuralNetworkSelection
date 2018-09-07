@@ -1,84 +1,99 @@
 import numpy as np
 
-SIZE_IN = 3;
-SIZE_OUT = 3;
-SIZE_INT = 2;
 
 def sigmoid(x, derivative=False):
-  return x * (1 - x) if derivative else 1 / (1 + np.exp(-x))
+    return x * (1 - x) if derivative else 1 / (1 + np.exp(-x))
 
-class NeuronLayer :
-    def __init__(this, size, activation = sigmoid):        
-        this.set(size, activation): 
 
-    def activate(this):
-        this.activation(this.vector);
+class NeuronLayer:
+    def __init__(self, size, activation=sigmoid):
+        self.size = 0
+        self.activation = sigmoid
+        self.vector = np.zeros(size)
+        self.set(size, activation)
 
-    def set(this, size, activation = sigmoid): 
-        this.size = size;
-        this.activation = activation;
-        this.vector = np.zeros(size);
-   
-   def reinit(this):
-       this.vector = np.zeros(size);
+    def zero(self):
+        self.vector = np.zeros(self.size)
 
-class NeuralNetwork :
-    def __init__(this, shape, activation = sigmoid, values = None):
-        this.coefs = [];
-        this.layers = [];
-        if values == None:
-            this.values = [];
-            for i in range(len(shape) - 1):
-                this.values = this.values + [0.0] * shape[i] * shape[i + 1];
-        this.values = np.array(this.values);
-        this.putValuesInCoefs();
+    def activate(self):
+        self.activation(self.vector)
+
+    def set(self, size, activation=sigmoid):
+        self.size = size
+        self.activation = activation
+        self.zero()
+
+
+class NeuralNetwork:
+    def __init__(self, shape, activation=sigmoid, values=None):
+        self.coefs = []
+        self.layers = []
+        self.values = []
+
+        if shape is not None and values is None:
+            self.randomize(shape, activation)
+
+    def matrices_from_values(self, values=None):
+        if values is not None:
+            self.values = values
+            self.coefs = []
+            j = 0
+            for i in range(len(self.layers) - 1):
+                matrix = np.zeros((self.layers[i].size, self.layers[i + 1].size))
+
+                for x in range(self.layers[i].size):
+                    for y in range(self.layers[i + 1].size):
+                        matrix[x, y] = self.values[j]
+                        j += 1
+                self.coefs.append(np.matrix(matrix))
+
+    def zero(self, shape, activation):
+        # Initialize each layer with zeros
+        self.layers = []
+
         for i in range(len(shape)):
-            this.layers.append(NeuronLayer(shape[i], activation)); 
+            self.layers.append(NeuronLayer(shape[i], activation))
 
-    def putValuesInCoefs(this, values = None):
-        if values != None:
-            this.values = values;
-        this.coefs = []
-        j = 0;
-        for i in range(len(this.shape) - 1):
-            matrix = np.zeros(this.shape[i], this.shape[i + 1]);
-            for x in range(this.shape[i]):
-                for y in range(this.shape[i]):
-                    matrix[x,y] = this.values[j];
-                    j++;
-            this.coefs.append(matrix);
-    
-    def feedInput(this, values):
-        if (len(values) == len(this.layers[0].size)):
-            for i in range(len(values)):
-                this.layers[0].vector[i] = values[i];
-            
-"""
-class NeuralNetwork :
-    def __init__(this, weightMatrix = None):
-        this.vectorIn = np.mat(1, SIZE_IN + 1);
+        # Initialize values of transfers matrix in self. Coefs with a linear array
+        self.values = []
 
-        this.vectorOut = np.mat(1, SIZE_OUT);
+        for i in range(len(shape) - 1):
+            self.values = self.values + [0.0] * shape[i] * shape[i + 1]
 
-        this.neuralMatrix = [np.mat(1, SIZE_INT + 1), np.mat(1, SIZE_INT + 1)];
+        self.values = np.array(self.values)
 
-        if weightMatrix == None :
+    def randomize(self, shape, activation):
+        self.zero(shape, activation)
 
-            this.weightMatrix = [np.random.rand(SIZE_IN + 1, SIZE_INT + 1),
-                                 np.random.rand(SIZE_INT + 1, SIZE_INT + 1),
-                                 np.random.rand(SIZE_INT + 1, SIZE_OUT + 1)];
+        if self.values is not None:
+            self.values.rand(len(self.values))
+
+        self.matrices_from_values(self.values)
+
+    def output(self, input_layer):
+        if input_layer.size == self.layers[0].size:
+            self.layers[0] = input_layer
+            output = self.layers[0]
+
+            for i in range(len(self.coefs)):
+                output = self.coefs[i] * output
+
+        return output
 
 
-    def computeOutput(this, vectorIn):
-        sizeOfNetwork = len(this.neuralMatrix);
+testLayer = NeuronLayer(6)
 
-        if len(vectorIn) == SIZE_IN + 1:
-            vectorIn[-1] = 1;
-            this.neuralMatrix[0] = this.weightMatrix[0] * vectorIn
-            this.neuralMatrix[0][-1] = 1
-            for k in range(1, sizeOfNetwork):
-                this.neuralMatrix[k] = this.weightMatrix[k] * this.neuralMatrix[k - 1]
-                this.neuralMatrix[k] = np.matrix
+testNetwork = NeuralNetwork([3, 2, 3])
 
-            this.vectorOut = this.weightMatrix[-1] * this.neuralMatrix[-1]
-"""
+# Test program
+
+print("Checking linear values of coefs :")
+print(testNetwork.values)
+
+print("Checking matrical values of coefs :")
+for coefsMatrix in testNetwork.coefs:
+    print(coefsMatrix)
+
+print("Checking layers values :")
+for layer in testNetwork.layers:
+    print(layer.vector)
