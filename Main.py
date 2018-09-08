@@ -7,7 +7,7 @@ def sigmoid(x, derivative=False):
 
 class NeuronLayer:
     def __init__(self, size, activation=sigmoid):
-        self.size = 0
+        self.size = size 
         self.activation = sigmoid
         self.vector = np.zeros(size)
         self.set(size, activation)
@@ -16,7 +16,7 @@ class NeuronLayer:
         self.vector = np.zeros(self.size)
 
     def activate(self):
-        self.activation(self.vector)
+        self.vector = self.activation(self.vector)
 
     def set(self, size, activation=sigmoid):
         self.size = size
@@ -32,6 +32,7 @@ class NeuralNetwork:
 
         if shape is not None and values is None:
             self.randomize(shape, activation)
+        self.matrices_from_values(self.values);
 
     def matrices_from_values(self, values=None):
         if values is not None:
@@ -66,19 +67,19 @@ class NeuralNetwork:
         self.zero(shape, activation)
 
         if self.values is not None:
-            self.values.rand(len(self.values))
+            self.values = np.random.rand(len(self.values))
 
         self.matrices_from_values(self.values)
 
     def output(self, input_layer):
         if input_layer.size == self.layers[0].size:
             self.layers[0] = input_layer
-            output = self.layers[0]
+            output = self.layers[0].vector
 
             for i in range(len(self.coefs)):
-                output = self.coefs[i] * output
-
-        return output
+                self.layers[i + 1].vector = self.layers[i].vector * self.coefs[i]
+                self.layers[i + 1].activate();
+        return self.layers[-1].vector;
 
 
 testLayer = NeuronLayer(6)
@@ -94,6 +95,9 @@ print("Checking matrical values of coefs :")
 for coefsMatrix in testNetwork.coefs:
     print(coefsMatrix)
 
+layer = NeuronLayer(3);
+layer.vector = np.array([5.0,2.0,1.0]);
+print(testNetwork.output(layer));
 print("Checking layers values :")
 for layer in testNetwork.layers:
     print(layer.vector)
